@@ -10,5 +10,11 @@
       "database_id": "72035a29-9507-4e75-9ecd-020457bed7c1",
       "migrations_dir": "drizzle"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "jay-bhavani-media"
+    }
   ]
 }

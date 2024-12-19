@@ -1,7 +1,10 @@
 ---
+import { getDBClient } from '../db/client';
+import { usersTable } from '../db/schema/users';
 import Layout from '../layouts/Layout.astro';
 
-console.log(Astro.locals.users);
+const DB = await getDBClient(Astro);
+const users = await DB.select().from(usersTable).all();
 
 // Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
@@ -9,7 +12,7 @@ console.log(Astro.locals.users);
 
 <Layout>
 	<ul>
-		{Astro.locals.users.map(u => {
+		{users.map(u => {
 			return (
 				<li>{ u.name }</li>
 			)
