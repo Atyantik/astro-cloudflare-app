@@ -3,9 +3,12 @@ import {
   constructCdnUrl,
   fileExists,
   uploadFile,
-  validateImage,
+  validateFile,
 } from '@utils/r2-storage.util';
 import { computeShortHash } from '@utils/hash.util';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import { createFile, getFileFromKey } from 'src/services/files.service';
+import type { SelectFileType } from '@db/schema/files';
 
 type R2Bucket = Env["STORAGE"];
 
@@ -34,32 +37,49 @@ async function handleUpload(
   storage: R2Bucket,
   cdnUrlEnv: string | undefined,
   mode: string,
-  requestUrl: string
-): Promise<string> {
+  requestUrl: string,
+  db: DrizzleD1Database,
+): Promise<SelectFileType & { url: string }> {
   // Validate the image
-  const image = validateImage(formData.get('image'));
+  const file = validateFile(formData.get('file'));
 
   // Read the file content as ArrayBuffer
-  const arrayBuffer = await image.arrayBuffer();
+  const arrayBuffer = await file.arrayBuffer();
 
   // Compute SHA-256 hash
   const hashHex = await computeShortHash(arrayBuffer);
 
   // Generate unique key
-  const key = generateKey(hashHex, image.name);
+  const key = generateKey(hashHex, file.name);
 
   // Check if file exists
   const exists = await fileExists(storage, key);
 
   if (!exists) {
     // Upload the file if it doesn't exist
-    await uploadFile(storage, key, arrayBuffer, image.type);
+
+    await uploadFile(storage, key, arrayBuffer, file.type);
+  }
+
+  // Check if the DB Entry exists!
+  let fileFromKey = await getFileFromKey(key, db);
+  if (!fileFromKey) {
+    await createFile({
+      key,
+      originalName: file.name,
+      size: file.size,
+      mimeType: file.type,
+      hash: hashHex,
+    }, db);
+    fileFromKey = await getFileFromKey(key, db);
   }
 
   // Construct the CDN URL
-  const imageUrl = constructCdnUrl(mode, cdnUrlEnv, requestUrl, key);
-
-  return imageUrl;
+  const fileUrl = constructCdnUrl(mode, cdnUrlEnv, requestUrl, key);
+  return {
+    ...fileFromKey,
+    url: fileUrl
+  }
 }
 
 /**
@@ -67,6 +87,7 @@ async function handleUpload(
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   const { STORAGE: storage, CDN_URL } = locals.runtime.env;
+  const { dbClient } = locals
   const mode = import.meta.env.MODE;
   const requestUrl = request.url;
 
@@ -75,17 +96,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const formData = await request.formData();
 
     // Handle the upload process
-    const imageUrl = await handleUpload(
+    const fileData = await handleUpload(
       formData,
       storage,
       CDN_URL,
       mode,
       requestUrl,
+      dbClient,
     );
 
     // Respond with the image URL
     return new Response(
-      JSON.stringify({ url: imageUrl }),
+      JSON.stringify(fileData),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
 
@@ -101,7 +123,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         ? error.message
         : 'Failed to upload image. Please try again later.';
     }
-    
+
 
     return new Response(
       JSON.stringify({ error: errorMessage }),

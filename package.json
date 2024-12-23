@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "wrangler types && astro dev",
     "start": "wrangler types && astro dev",
+    "migration:generate": "drizzle-kit generate",
     "build": "wrangler types && astro check && astro build && npm run migrate:remote",
     "preview": "wrangler types && astro preview",
     "migrate:local": "drizzle-kit generate && echo 'Y' | wrangler d1 migrations apply $(node scripts/parse-d1.js) --local",
@@ -18,7 +19,8 @@
     "astro": "^5.1.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "drizzle-kit": "^0.30.1",

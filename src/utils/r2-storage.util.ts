@@ -1,16 +1,16 @@
 type R2Bucket = Env['STORAGE']
 
 /**
- * Validates the uploaded image.
- * @param image - The uploaded file.
+ * Validates the uploaded file.
+ * @param file - The uploaded file.
  * @returns The validated File object.
  * @throws Error if validation fails.
  */
-export function validateImage(image: FormDataEntryValue | null): File {
-  if (!image || !(image instanceof File)) {
+export function validateFile(file: FormDataEntryValue | null): File {
+  if (!file || !(file instanceof File)) {
     throw new Error('No image file provided or invalid file type.');
   }
-  return image;
+  return file;
 }
 
 /**
