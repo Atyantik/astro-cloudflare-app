@@ -1,7 +1,7 @@
 ---
-import { getDBClient } from '../db/client';
-import { usersTable } from '../db/schema/users';
-import Layout from '../layouts/Layout.astro';
+import { getDBClient } from '@db/client';
+import { usersTable } from '@db/schema/users';
+import Layout from '@layouts/Layout.astro';
 
 const DB = await getDBClient(Astro);
 const users = await DB.select().from(usersTable).all();

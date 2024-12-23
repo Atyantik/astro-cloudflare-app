@@ -2,6 +2,6 @@
 
 interface Env {
 	CDN_URL: string;
-	MEDIA: R2Bucket;
+	STORAGE: R2Bucket;
 	DB: D1Database;
 }
